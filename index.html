@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tambah Peserta Baru</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "Segoe UI", Roboto, Arial, sans-serif;
+    background: #e5e7eb;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+  .modal {
+    background: #fff;
+    width: 100%;
+    max-width: 760px;
+    border-radius: 16px;
+    box-shadow: 0 20px 50px rgba(0,0,0,.2);
+    display: flex;
+    flex-direction: column;
+    max-height: calc(100vh - 48px);
+    overflow: hidden;
+  }
+  .modal-header {
+    display: flex; align-items: flex-start; gap: 16px;
+    padding: 24px 28px 18px;
+    border-bottom: 1px solid #f1f5f9;
+    position: relative;
+  }
+  .icon-box {
+    width: 52px; height: 52px; border-radius: 12px;
+    background: #eef2ff; color: #4f46e5;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; flex-shrink: 0; font-weight: 700;
+  }
+  .modal-header h1 { font-size: 22px; font-weight: 800; color: #0f172a; }
+  .modal-header p { font-size: 14px; color: #64748b; margin-top: 4px; }
+  .close-btn {
+    position: absolute; right: 24px; top: 20px;
+    background: none; border: none; font-size: 22px; color: #94a3b8; cursor: pointer;
+  }
+  .modal-body { padding: 20px 28px; overflow-y: auto; flex: 1; }
+  .section-title {
+    font-size: 15px; font-weight: 800; color: #1e293b;
+    text-transform: uppercase; letter-spacing: .03em;
+    margin: 24px 0 14px; padding-bottom: 10px;
+    border-bottom: 1px solid #e2e8f0;
+  }
+  .section-title:first-child { margin-top: 0; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px 20px; }
+  .full { grid-column: 1 / -1; }
+  label {
+    display: block; font-size: 12px; font-weight: 700; color: #334155;
+    text-transform: uppercase; letter-spacing: .04em; margin-bottom: 6px;
+  }
+  .req { color: #ef4444; }
+  .opt { color: #64748b; font-weight: 600; }
+  input, select {
+    width: 100%; padding: 12px 14px;
+    border: 1px solid #cbd5e1; border-radius: 10px;
+    font-size: 15px; color: #0f172a; background: #fff;
+    outline: none; font-family: inherit;
+  }
+  input:focus, select:focus { border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99,102,241,.15); }
+  input::placeholder { color: #94a3b8; }
+  select:disabled, input:disabled { background: #f8fafc; color: #94a3b8; cursor: not-allowed; }
+  .error-msg { color: #ef4444; font-size: 12px; margin-top: 4px; display: none; }
+  .invalid { border-color: #ef4444 !important; }
+  .radio-group { display: flex; gap: 10px; flex-wrap: wrap; }
+  .radio-group label {
+    display: flex; align-items: center; gap: 8px;
+    padding: 10px 16px; border: 1px solid #cbd5e1; border-radius: 10px;
+    text-transform: none; letter-spacing: 0; font-size: 14px; font-weight: 600;
+    color: #334155; cursor: pointer; margin: 0;
+  }
+  .radio-group input { width: auto; }
+  .radio-group label.active { border-color: #6366f1; background: #eef2ff; color: #4338ca; }
+  .alumni-box {
+    background: #f8fafc; border: 1px dashed #c7d2fe;
+    border-radius: 12px; padding: 16px; margin-top: 16px;
+  }
+  .alumni-box.hidden { display: none; }
+  .modal-footer {
+    display: flex; justify-content: flex-end; gap: 12px;
+    padding: 18px 28px; border-top: 1px solid #f1f5f9;
+  }
+  .btn {
+    padding: 12px 22px; border-radius: 10px; font-size: 15px; font-weight: 700;
+    cursor: pointer; border: 1px solid #cbd5e1; background: #fff;
+    color: #334155; font-family: inherit;
+  }
+  .btn-primary { background: #4f46e5; border-color: #4f46e5; color: #fff; }
+  .btn-primary:hover { background: #4338ca; }
+  .result {
+    display: none; margin: 0 28px 18px; padding: 14px 16px;
+    background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 10px;
+    color: #065f46; font-size: 14px;
+  }
+  .result pre {
+    margin-top: 10px; background: #fff; padding: 12px; border-radius: 8px;
+    font-size: 12px; overflow-x: auto; white-space: pre-wrap;
+  }
+  @media (max-width: 640px) {
+    .grid { grid-template-columns: 1fr; }
+    .modal-header h1 { font-size: 19px; }
+  }
+</style>
+</head>
+<body>
+
+<form class="modal" id="formPeserta" novalidate>
+  <div class="modal-header">
+    <div class="icon-box">+</div>
+    <div>
+      <h1>Tambah Peserta Baru</h1>
+      <p>Daftarkan peserta kursus dan registrasi program bantuan lembaga Anda</p>
+    </div>
+    <button type="button" class="close-btn" aria-label="Tutup" onclick="resetAll()">✕</button>
+  </div>
+
+  <div class="modal-body">
+
+    <!-- 1. DATA PRIBADI -->
+    <div class="section-title">1. Data Pribadi Peserta</div>
+    <div class="grid">
+      <div>
+        <label for="nik">NIK <span class="req">*</span></label>
+        <input type="text" id="nik" inputmode="numeric" maxlength="16" placeholder="16 digit NIK...">
+        <div class="error-msg" id="err-nik">NIK harus 16 digit angka</div>
+      </div>
+      <div>
+        <label for="nama">Nama Lengkap <span class="req">*</span></label>
+        <input type="text" id="nama" placeholder="Ketik nama lengkap sesuai KTP...">
+        <div class="error-msg" id="err-nama">Nama lengkap wajib diisi</div>
+      </div>
+
+      <div>
+        <label for="jk">Jenis Kelamin <span class="req">*</span></label>
+        <select id="jk">
+          <option value="">Pilih Jenis Kelamin</option>
+          <option value="L">Laki-laki (L)</option>
+          <option value="P">Perempuan (P)</option>
+        </select>
+        <div class="error-msg" id="err-jk">Pilih jenis kelamin</div>
+      </div>
+      <div>
+        <label for="tgl">Tanggal Lahir <span class="req">*</span></label>
+        <input type="date" id="tgl">
+        <div class="error-msg" id="err-tgl">Tanggal lahir wajib diisi</div>
+      </div>
+
+      <div>
+        <label for="telp">No. Telepon / WhatsApp <span class="opt">(Opsional)</span></label>
+        <input type="tel" id="telp" inputmode="numeric" placeholder="Contoh: 08123456789">
+      </div>
+      <div>
+        <label for="pendidikan">Pendidikan Terakhir <span class="req">*</span></label>
+        <select id="pendidikan">
+          <option value="">Pilih Pendidikan Terakhir</option>
+          <option>SD / Sederajat</option>
+          <option>SMP / Sederajat</option>
+          <option>SMA / SMK / Sederajat</option>
+          <option>D1 / D2</option>
+          <option>D3</option>
+          <option>D4 / S1</option>
+          <option>S2</option>
+          <option>S3</option>
+        </select>
+        <div class="error-msg" id="err-pendidikan">Pilih pendidikan terakhir</div>
+      </div>
+
+      <div>
+        <label for="prov">Provinsi Domisili <span class="req">*</span></label>
+        <select id="prov"><option value="">Pilih Provinsi</option></select>
+        <div class="error-msg" id="err-prov">Pilih provinsi</div>
+      </div>
+      <div>
+        <label for="kab">Kabupaten / Kota Domisili <span class="req">*</span></label>
+        <select id="kab" disabled><option value="">Pilih provinsi terlebih dahulu</option></select>
+        <div class="error-msg" id="err-kab">Pilih kabupaten / kota</div>
+      </div>
+    </div>
+
+    <!-- 2. PROGRAM -->
+    <div class="section-title">2. Program Bantuan &amp; Kejuruan</div>
+    <div class="grid">
+      <div>
+        <label for="tipe">Tipe Program <span class="req">*</span></label>
+        <select id="tipe">
+          <option value="">Pilih Tipe Program</option>
+          <option value="PKW">PKW - Pendidikan Kecakapan Wirausaha</option>
+          <option value="PKK">PKK - Pendidikan Kecakapan Kerja</option>
+        </select>
+        <div class="error-msg" id="err-tipe">Pilih tipe program</div>
+      </div>
+      <div>
+        <label for="tahun">Tahun Bantuan <span class="req">*</span></label>
+        <select id="tahun"></select>
+      </div>
+
+      <div class="full">
+        <label for="keterampilan">Jenis Keterampilan Lembaga <span class="req">*</span></label>
+        <select id="keterampilan">
+          <option value="">Pilih tipe program terlebih dahulu</option>
+        </select>
+        <div class="error-msg" id="err-keterampilan">Pilih jenis keterampilan</div>
+      </div>
+    </div>
+
+    <!-- 3. STATUS -->
+    <div class="section-title">3. Status Peserta</div>
+    <div class="radio-group" id="statusGroup">
+      <label class="active"><input type="radio" name="status" value="Peserta Aktif" checked> Peserta Aktif</label>
+      <label><input type="radio" name="status" value="Lulusan / Alumni"> Lulusan / Alumni</label>
+    </div>
+
+    <div class="alumni-box hidden" id="alumniBox">
+      <div class="grid">
+        <div class="full">
+          <label for="asalLKP">Asal LKP <span class="req">*</span></label>
+          <input type="text" id="asalLKP" placeholder="Nama lembaga kursus asal peserta">
+          <div class="error-msg" id="err-asalLKP">Asal LKP wajib diisi</div>
+        </div>
+
+        <div>
+          <label for="tahunLulus">Tahun Lulus <span class="req">*</span></label>
+          <select id="tahunLulus"><option value="">Pilih Tahun Lulus</option></select>
+          <div class="error-msg" id="err-tahunLulus">Pilih tahun lulus</div>
+        </div>
+        <div>
+          <label for="noSertifikat">No. Sertifikat <span class="opt">(Opsional)</span></label>
+          <input type="text" id="noSertifikat" placeholder="Nomor sertifikat kelulusan">
+        </div>
+
+        <div>
+          <label for="statusKerja">Status Bekerja Saat Ini</label>
+          <select id="statusKerja">
+            <option value="">Pilih Status</option>
+            <option>Bekerja di Dalam Negeri</option>
+            <option>Bekerja di Luar Negeri</option>
+            <option>Wirausaha / Mandiri</option>
+            <option>Melanjutkan Pendidikan</option>
+            <option>Belum Bekerja</option>
+          </select>
+        </div>
+        <div>
+          <label for="negara">Negara Tujuan Penempatan <span class="opt">(Opsional)</span></label>
+          <select id="negara">
+            <option value="">Pilih Negara</option>
+            <option value="Dalam Negeri">Dalam Negeri (Bukan Luar Negeri)</option>
+            <option>Arab Saudi</option>
+            <option>Uni Emirat Arab</option>
+            <option>Malaysia</option>
+            <option>Singapura</option>
+            <option>Hong Kong</option>
+            <option>Taiwan</option>
+            <option>Jepang</option>
+            <option>Korea Selatan</option>
+            <option>Lainnya</option>
+          </select>
+        </div>
+
+        <div class="full">
+          <label for="pekerjaanLN">Pekerjaan di Negara Tujuan <span class="opt">(Opsional)</span></label>
+          <input type="text" id="pekerjaanLN" placeholder="Contoh: Caregiver, Chef, IT...">
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="result" id="result"></div>
+
+  <div class="modal-footer">
+    <button type="button" class="btn" onclick="resetAll()">Batal</button>
+    <button type="submit" class="btn btn-primary">✔ Simpan Peserta</button>
+  </div>
+</form>
+
+<script>
+/* ==========================================================
+   DATA WILAYAH: 38 provinsi Indonesia
+   kab = Kabupaten (ditampilkan "Kab. ..."), kota = Kota ("Kota ...")
+   ========================================================== */
+const WILAYAH = {
+  "Aceh": {
+    kab: ["Simeulue","Aceh Singkil","Aceh Selatan","Aceh Tenggara","Aceh Timur","Aceh Tengah","Aceh Barat","Aceh Besar","Pidie","Bireuen","Aceh Utara","Aceh Barat Daya","Gayo Lues","Aceh Tamiang","Nagan Raya","Aceh Jaya","Bener Meriah","Pidie Jaya"],
+    kota: ["Banda Aceh","Sabang","Langsa","Lhokseumawe","Subulussalam"]
+  },
+  "Sumatera Utara": {
+    kab: ["Nias","Mandailing Natal","Tapanuli Selatan","Tapanuli Tengah","Tapanuli Utara","Toba","Labuhanbatu","Asahan","Simalungun","Dairi","Karo","Deli Serdang","Langkat","Nias Selatan","Humbang Hasundutan","Pakpak Bharat","Samosir","Serdang Bedagai","Batu Bara","Padang Lawas Utara","Padang Lawas","Labuhanbatu Selatan","Labuhanbatu Utara","Nias Utara","Nias Barat"],
+    kota: ["Sibolga","Tanjung Balai","Pematang Siantar","Tebing Tinggi","Medan","Binjai","Padangsidimpuan","Gunungsitoli"]
+  },
+  "Sumatera Barat": {
+    kab: ["Kepulauan Mentawai","Pesisir Selatan","Solok","Sijunjung","Tanah Datar","Padang Pariaman","Agam","Lima Puluh Kota","Pasaman","Solok Selatan","Dharmasraya","Pasaman Barat"],
+    kota: ["Padang","Solok","Sawahlunto","Padang Panjang","Bukittinggi","Payakumbuh","Pariaman"]
+  },
+  "Riau": {
+    kab: ["Kuantan Singingi","Indragiri Hulu","Indragiri Hilir","Pelalawan","Siak","Kampar","Rokan Hulu","Bengkalis","Rokan Hilir","Kepulauan Meranti"],
+    kota: ["Pekanbaru","Dumai"]
+  },
+  "Jambi": {
+    kab: ["Kerinci","Merangin","Sarolangun","Batang Hari","Muaro Jambi","Tanjung Jabung Timur","Tanjung Jabung Barat","Tebo","Bungo"],
+    kota: ["Jambi","Sungai Penuh"]
+  },
+  "Sumatera Selatan": {
+    kab: ["Ogan Komering Ulu","Ogan Komering Ilir","Muara Enim","Lahat","Musi Rawas","Musi Banyuasin","Banyuasin","Ogan Komering Ulu Selatan","Ogan Komering Ulu Timur","Ogan Ilir","Empat Lawang","Penukal Abab Lematang Ilir","Musi Rawas Utara"],
+    kota: ["Palembang","Prabumulih","Pagar Alam","Lubuklinggau"]
+  },
+  "Bengkulu": {
+    kab: ["Bengkulu Selatan","Rejang Lebong","Bengkulu Utara","Kaur","Seluma","Mukomuko","Lebong","Kepahiang","Bengkulu Tengah"],
+    kota: ["Bengkulu"]
+  },
+  "Lampung": {
+    kab: ["Lampung Barat","Tanggamus","Lampung Selatan","Lampung Timur","Lampung Tengah","Lampung Utara","Way Kanan","Tulang Bawang","Pesawaran","Pringsewu","Mesuji","Tulang Bawang Barat","Pesisir Barat"],
+    kota: ["Bandar Lampung","Metro"]
+  },
+  "Kepulauan Bangka Belitung": {
+    kab: ["Bangka","Belitung","Bangka Barat","Bangka Tengah","Bangka Selatan","Belitung Timur"],
+    kota: ["Pangkal Pinang"]
+  },
+  "Kepulauan Riau": {
+    kab: ["Bintan","Karimun","Natuna","Lingga","Kepulauan Anambas"],
+    kota: ["Batam","Tanjung Pinang"]
+  },
+  "DKI Jakarta": {
+    kab: ["Kepulauan Seribu"],
+    kota: ["Jakarta Selatan","Jakarta Timur","Jakarta Pusat","Jakarta Barat","Jakarta Utara"]
+  },
+  "Jawa Barat": {
+    kab: ["Bogor","Sukabumi","Cianjur","Bandung","Garut","Tasikmalaya","Ciamis","Kuningan","Cirebon","Majalengka","Sumedang","Indramayu","Subang","Purwakarta","Karawang","Bekasi","Bandung Barat","Pangandaran"],
+    kota: ["Bogor","Sukabumi","Bandung","Cirebon","Bekasi","Depok","Cimahi","Tasikmalaya","Banjar"]
+  },
+  "Jawa Tengah": {
+    kab: ["Cilacap","Banyumas","Purbalingga","Banjarnegara","Kebumen","Purworejo","Wonosobo","Magelang","Boyolali","Klaten","Sukoharjo","Wonogiri","Karanganyar","Sragen","Grobogan","Blora","Rembang","Pati","Kudus","Jepara","Demak","Semarang","Temanggung","Kendal","Batang","Pekalongan","Pemalang","Tegal","Brebes"],
+    kota: ["Magelang","Surakarta","Salatiga","Semarang","Pekalongan","Tegal"]
+  },
+  "DI Yogyakarta": {
+    kab: ["Kulon Progo","Bantul","Gunungkidul","Sleman"],
+    kota: ["Yogyakarta"]
+  },
+  "Jawa Timur": {
+    kab: ["Pacitan","Ponorogo","Trenggalek","Tulungagung","Blitar","Kediri","Malang","Lumajang","Jember","Banyuwangi","Bondowoso","Situbondo","Probolinggo","Pasuruan","Sidoarjo","Mojokerto","Jombang","Nganjuk","Madiun","Magetan","Ngawi","Bojonegoro","Tuban","Lamongan","Gresik","Bangkalan","Sampang","Pamekasan","Sumenep"],
+    kota: ["Kediri","Blitar","Malang","Probolinggo","Pasuruan","Mojokerto","Madiun","Surabaya","Batu"]
+  },
+  "Banten": {
+    kab: ["Pandeglang","Lebak","Tangerang","Serang"],
+    kota: ["Tangerang","Cilegon","Serang","Tangerang Selatan"]
+  },
+  "Bali": {
+    kab: ["Jembrana","Tabanan","Badung","Gianyar","Klungkung","Bangli","Karangasem","Buleleng"],
+    kota: ["Denpasar"]
+  },
+  "Nusa Tenggara Barat": {
+    kab: ["Lombok Barat","Lombok Tengah","Lombok Timur","Sumbawa","Dompu","Bima","Sumbawa Barat","Lombok Utara"],
+    kota: ["Mataram","Bima"]
+  },
+  "Nusa Tenggara Timur": {
+    kab: ["Sumba Barat","Sumba Timur","Kupang","Timor Tengah Selatan","Timor Tengah Utara","Belu","Alor","Lembata","Flores Timur","Sikka","Ende","Ngada","Manggarai","Rote Ndao","Manggarai Barat","Sumba Tengah","Sumba Barat Daya","Nagekeo","Manggarai Timur","Sabu Raijua","Malaka"],
+    kota: ["Kupang"]
+  },
+  "Kalimantan Barat": {
+    kab: ["Sambas","Bengkayang","Landak","Pontianak","Sanggau","Ketapang","Sintang","Kapuas Hulu","Sekadau","Melawi","Kayong Utara","Kubu Raya"],
+    kota: ["Pontianak","Singkawang"]
+  },
+  "Kalimantan Tengah": {
+    kab: ["Kotawaringin Barat","Kotawaringin Timur","Kapuas","Barito Selatan","Barito Utara","Sukamara","Lamandau","Seruyan","Katingan","Pulang Pisau","Gunung Mas","Barito Timur","Murung Raya"],
+    kota: ["Palangka Raya"]
+  },
+  "Kalimantan Selatan": {
+    kab: ["Tanah Laut","Kotabaru","Banjar","Barito Kuala","Tapin","Hulu Sungai Selatan","Hulu Sungai Tengah","Hulu Sungai Utara","Tabalong","Tanah Bumbu","Balangan"],
+    kota: ["Banjarmasin","Banjarbaru"]
+  },
+  "Kalimantan Timur": {
+    kab: ["Paser","Kutai Barat","Kutai Kartanegara","Kutai Timur","Berau","Penajam Paser Utara","Mahakam Ulu"],
+    kota: ["Balikpapan","Samarinda","Bontang"]
+  },
+  "Kalimantan Utara": {
+    kab: ["Malinau","Bulungan","Nunukan","Tana Tidung"],
+    kota: ["Tarakan"]
+  },
+  "Sulawesi Utara": {
+    kab: ["Bolaang Mongondow","Minahasa","Kepulauan Sangihe","Kepulauan Talaud","Minahasa Selatan","Minahasa Utara","Bolaang Mongondow Utara","Siau Tagulandang Biaro","Minahasa Tenggara","Bolaang Mongondow Selatan","Bolaang Mongondow Timur"],
+    kota: ["Manado","Bitung","Tomohon","Kotamobagu"]
+  },
+  "Sulawesi Tengah": {
+    kab: ["Banggai Kepulauan","Banggai","Morowali","Poso","Donggala","Tolitoli","Buol","Parigi Moutong","Tojo Una-Una","Sigi","Banggai Laut","Morowali Utara"],
+    kota: ["Palu"]
+  },
+  "Sulawesi Selatan": {
+    kab: ["Kepulauan Selayar","Bulukumba","Bantaeng","Jeneponto","Takalar","Gowa","Sinjai","Maros","Pangkajene dan Kepulauan","Barru","Bone","Soppeng","Wajo","Sidenreng Rappang","Pinrang","Enrekang","Luwu","Tana Toraja","Luwu Utara","Luwu Timur","Toraja Utara"],
+    kota: ["Makassar","Parepare","Palopo"]
+  },
+  "Sulawesi Tenggara": {
+    kab: ["Buton","Muna","Konawe","Kolaka","Konawe Selatan","Bombana","Wakatobi","Kolaka Utara","Buton Utara","Konawe Utara","Kolaka Timur","Konawe Kepulauan","Muna Barat","Buton Tengah","Buton Selatan"],
+    kota: ["Kendari","Baubau"]
+  },
+  "Gorontalo": {
+    kab: ["Boalemo","Gorontalo","Pohuwato","Bone Bolango","Gorontalo Utara"],
+    kota: ["Gorontalo"]
+  },
+  "Sulawesi Barat": {
+    kab: ["Mamuju","Mamasa","Polewali Mandar","Majene","Mamuju Tengah","Mamuju Utara"],
+    kota: []
+  },
+  "Maluku": {
+    kab: ["Maluku Tengah","Maluku Tenggara","Maluku Tenggara Barat","Buru","Seram Bagian Timur","Seram Bagian Barat","Kepulauan Aru","Maluku Barat Daya","Buru Selatan"],
+    kota: ["Ambon","Tual"]
+  },
+  "Maluku Utara": {
+    kab: ["Halmahera Barat","Halmahera Tengah","Kepulauan Sula","Halmahera Selatan","Halmahera Utara","Halmahera Timur","Pulau Morotai","Pulau Taliabu"],
+    kota: ["Ternate","Tidore Kepulauan"]
+  },
+  "Papua Barat": {
+    kab: ["Fakfak","Kaimana","Teluk Wondama","Teluk Bintuni","Manokwari","Manokwari Selatan","Pegunungan Arfak"],
+    kota: []
+  },
+  "Papua Barat Daya": {
+    kab: ["Sorong","Sorong Selatan","Raja Ampat","Tambrauw","Maybrat"],
+    kota: ["Sorong"]
+  },
+  "Papua": {
+    kab: ["Jayapura","Kepulauan Yapen","Biak Numfor","Sarmi","Keerom","Waropen","Supiori","Mamberamo Raya"],
+    kota: ["Jayapura"]
+  },
+  "Papua Selatan": {
+    kab: ["Merauke","Mappi","Boven Digoel","Asmat"],
+    kota: []
+  },
+  "Papua Tengah": {
+    kab: ["Nabire","Paniai","Puncak Jaya","Mimika","Intan Jaya","Deiyai","Dogiyai"],
+    kota: []
+  },
+  "Papua Pegunungan": {
+    kab: ["Jayawijaya","Pegunungan Bintang","Yahukimo","Tolikara","Nduga","Lanny Jaya","Mamberamo Tengah","Yalimo","Puncak"],
+    kota: []
+  }
+};
+
+/* ==========================================================
+   JENIS KETERAMPILAN (sesuai Tabel 2 lampiran)
+   ========================================================== */
+const KETERAMPILAN = {
+  PKW: [
+    { g: "Perikanan", items: ["Budidaya Ikan","Pengolahan Hasil Perikanan","Pemasaran Hasil Perikanan"] },
+    { g: "Pertanian dan Kehutanan", items: ["Budidaya Pertanian","Pengolahan Hasil Pertanian"] },
+    { g: "Pertamanan", items: ["Budidaya Tanaman","Lanskap"] },
+    { g: "Peternakan", items: ["Budidaya Ternak","Pengolahan Hasil Peternakan","Pemasaran Hasil Peternakan"] },
+    { g: "Busana", items: ["Desain Busana","Jahit Busana"] },
+    { g: "Boga", items: ["Jasa Usaha Makanan","Pastri dan Bakeri"] },
+    { g: "Bordir dan Sulam", items: ["Bordir","Sulam"] },
+    { g: "Tenun", items: ["Ikat","Songket","Pintal"] },
+    { g: "Batik", items: ["Tulis","Cap"] },
+    { g: "Kerajinan Tangan", items: ["Hantaran","Rajut","Jahit Perca"] },
+    { g: "Pengelolaan Limbah", items: ["Pengelolaan Limbah","Pemanfaatan Limbah"] },
+    { g: "Pengelolaan Sampah", items: ["Pengelolaan Sampah"] },
+    { g: "Jasa Pelayanan Publik", items: ["Pelayanan Kebersihan","Pelayanan Penatu"] },
+    { g: "Kesehatan Tradisional", items: ["Pijat","Herbal Ramuan","Refleksi"] },
+    { g: "Tata Kecantikan", items: ["Tata Kecantikan Kulit","Tata Kecantikan Rambut","Tata Rias Wajah"] },
+    { g: "Pemasaran", items: ["Pemasaran Digital"] },
+    { g: "Industri Kreatif dan Konten Digital", items: ["Fotografi","Membuat Konten Tertulis (Blogger)","Membuat Konten Video (Vlogger)","Membuat Konten Siniar (Podcaster)","Membuat Konten Pemengaruh (Influencer)"] },
+    { g: "Desain Komunikasi Visual", items: ["Desain Grafis","Animasi"] },
+    { g: "Peramuan Minuman", items: ["Peramuan Kopi (Barista)","Peracikan Minuman (Bartender)"] },
+    { g: "Desain dan Teknologi Fesyen", items: ["Desain dan produksi aksesoris","Desain dan produksi tas","Desain dan produksi sepatu dan sandal"] },
+    { g: "Tata Rias Pengantin", items: ["Tradisional","Modern"] },
+    { g: "Merangkai Bunga", items: ["Merangkai Bunga Segar","Merangkai Bunga Kering/Imitasi"] },
+    { g: "Seni Kriya", items: ["Kulit dan imitasi","Logam","Kayu dan rotan","Keramik","Resin"] },
+    { g: "Teknik Otomasi", items: ["Teknik Perbaikan Telepon Seluler"] },
+    { g: "Teknik Otomotif", items: ["Teknik Sepeda Motor","Perbaikan Body dan Cat Kendaraan"] },
+    { g: "Teknik Konstruksi", items: ["Pertukangan Kayu Konstruksi"] },
+    { g: "Teknik Pengelasan", items: ["Pengelasan"] },
+    { g: "Teknik Ketenagalistrikan", items: ["Tata Udara dan Pendinginan"] },
+    { g: "Perangkat Keras", items: ["Teknik komputer","Jaringan komputer","Internet of Things (IoT)"] },
+    { g: "IT Security", items: ["Keamanan Data (cyber security)"] },
+    { g: "Transportasi Udara", items: ["Awak Kabin Pesawat Udara","Tata Operasi Darat"] },
+    { g: "Transportasi Darat", items: ["Mengemudi Kendaraan Bermotor"] }
+  ],
+  PKK: [
+    { g: "Bahasa Asing", items: ["Bahasa Inggris","Bahasa Mandarin"] },
+    { g: "Busana", items: ["Desain Busana","Jahit Busana"] },
+    { g: "Boga", items: ["Jasa Usaha Makanan","Pastri dan Bakeri"] },
+    { g: "Bordir dan Sulam", items: ["Bordir","Sulam"] },
+    { g: "Batik", items: ["Tulis","Cap","Printing"] },
+    { g: "Kerajinan Tangan", items: ["Hantaran"] },
+    { g: "Jasa Pelayanan Rumah Tangga", items: ["Keamanan Lingkungan","Asisten Rumah Tangga"] },
+    { g: "Olahraga", items: ["Olahraga Kebugaran/Senam"] },
+    { g: "Layanan Kesehatan", items: ["Pekarya Kesehatan","Pengasuhan Bayi dan Anak","Petugas Inventori Obat"] },
+    { g: "Kesehatan Tradisional", items: ["Pijat","Refleksi"] },
+    { g: "Kesejahteraan Holistik", items: ["Sanus Per Aquam (Spa)","Kebugaran Holistik (Wellness)"] },
+    { g: "Tata Kecantikan", items: ["Tata Kecantikan Kulit","Tata Kecantikan Rambut","Tata Rias Wajah"] },
+    { g: "Keuangan dan Aktuaria", items: ["Perpajakan","Akuntansi","Perdagangan Saham (Trading)"] },
+    { g: "Pemasaran", items: ["Pemasaran Digital","Pemasaran Ritel"] },
+    { g: "Manajemen", items: ["Logistik","Ekspor Impor","Administrasi Perkantoran","Manajemen Produksi","Manajemen Bengkel Otomotif"] },
+    { g: "Industri Kreatif dan Konten Digital", items: ["Fotografi","Videografi","Penyiar","Pembaca Berita"] },
+    { g: "Komunikasi Massa", items: ["Pewara (Master of Ceremony)","Hubungan Masyarakat (Humas)","Pembicara Publik (Public Speaking)"] },
+    { g: "Jurnalistik", items: ["Jurnalis","Penyunting"] },
+    { g: "Desain Komunikasi Visual", items: ["Desain Grafis","Animasi"] },
+    { g: "Perhotelan", items: ["Kantor depan (Front Office)","Pramusaji (Food and Beverage Service)","Tata Graha (Housekeeping)","Kuliner (Food Production)"] },
+    { g: "Travel", items: ["Travel Agent","Kepemanduan Wisata"] },
+    { g: "Peramuan Minuman", items: ["Peramuan Kopi (Barista)","Peracikan Minuman (Bartender)"] },
+    { g: "Desain dan Teknologi Fesyen", items: ["Desain dan produksi aksesoris","Desain dan produksi tas","Desain dan produksi sepatu dan sandal","Desain dan produksi perhiasan"] },
+    { g: "Tata Rias Pengantin", items: ["Tradisional","Modern"] },
+    { g: "Seni Pertunjukan", items: ["Seni Musik","Seni Tari","Seni Suara"] },
+    { g: "Seni Kriya", items: ["Kayu dan rotan"] },
+    { g: "Teknik Otomasi", items: ["Pengendali Logika Terprogram/Programmable Logic Controller (PLC)","Teknik Perbaikan Telepon Seluler","Robotika","Teknik Gambar Mesin"] },
+    { g: "Teknik Otomotif", items: ["Teknik Sepeda Motor","Teknik Kendaraan Ringan","Teknik Alat Berat","Perbaikan Body dan Cat Kendaraan","Teknik Ototronik"] },
+    { g: "Teknik Konstruksi", items: ["Penyusun Dinding dan Struktur","Pemasangan Pipa (Plumbing)","Perancah (Scaffolding)","Pertukangan Kayu Konstruksi","Gambar Bangunan (Drafter)","Topografi"] },
+    { g: "Teknik Pengelasan", items: ["Pengelasan"] },
+    { g: "Operasi dan Perawatan Mesin Tambang", items: ["Operator Alat Berat"] },
+    { g: "Teknik Ketenagalistrikan", items: ["Teknik instalasi listrik","Teknik Pemanasan","Tata Udara dan Pendinginan"] },
+    { g: "Perangkat Lunak (Software)", items: ["Aplikasi perkantoran, multimedia","Pembuatan perangkat lunak (pemrograman/koding aplikasi, pengembangan aplikasi, data science dan AI)"] },
+    { g: "Perangkat Keras", items: ["Teknik computer","Jaringan computer","Internet of Things (IoT)"] },
+    { g: "IT Security", items: ["Keamanan Data (cyber security)"] },
+    { g: "Transportasi Udara", items: ["Awak Kabin Pesawat Udara","Tata Operasi Darat"] },
+    { g: "Transportasi Darat", items: ["Mengemudi Kendaraan Bermotor"] }
+  ]
+};
+
+/* ==========================================================
+   ELEMEN & INISIALISASI
+   ========================================================== */
+const $ = id => document.getElementById(id);
+const prov = $("prov"), kab = $("kab"), tipe = $("tipe"), ket = $("keterampilan");
+const alumniBox = $("alumniBox");
+
+// Provinsi
+Object.keys(WILAYAH).forEach(p => prov.add(new Option(p, p)));
+
+// Tahun bantuan 2026 → 2020
+for (let y = 2026; y >= 2020; y--) $("tahun").add(new Option("Tahun " + y, y, false, y === 2026));
+
+// Tahun lulus 2026 → 2010
+for (let y = 2026; y >= 2020; y--) $("tahunLulus").add(new Option(y, y));
+
+// Provinsi → Kabupaten/Kota
+prov.addEventListener("change", () => {
+  kab.innerHTML = "";
+  if (!prov.value) {
+    kab.disabled = true;
+    kab.add(new Option("Pilih provinsi terlebih dahulu", ""));
+    return;
+  }
+  const w = WILAYAH[prov.value];
+  kab.disabled = false;
+  kab.add(new Option("Pilih Kabupaten / Kota", ""));
+  w.kab.forEach(n => kab.add(new Option("Kab. " + n, "Kab. " + n)));
+  w.kota.forEach(n => kab.add(new Option("Kota " + n, "Kota " + n)));
+  setErr("prov", false);
+});
+
+// Tipe program → Jenis keterampilan
+tipe.addEventListener("change", () => {
+  ket.innerHTML = "";
+  if (!tipe.value) {
+    ket.add(new Option("Pilih tipe program terlebih dahulu", ""));
+    return;
+  }
+  ket.add(new Option("Pilih Jenis Keterampilan", ""));
+  KETERAMPILAN[tipe.value].forEach(grup => {
+    const og = document.createElement("optgroup");
+    og.label = grup.g;
+    grup.items.forEach(it => og.appendChild(new Option(it, it)));
+    ket.appendChild(og);
+  });
+  setErr("tipe", false);
+});
+ket.add(new Option("Pilih tipe program terlebih dahulu", ""));
+
+// Negara tujuan "Lainnya": tampilkan kolom isian
+const negaraSel = $("negara");
+const negaraWrap = document.createElement("div");
+negaraWrap.className = "full";
+negaraWrap.id = "negaraLainnyaWrap";
+negaraWrap.style.display = "none";
+negaraWrap.innerHTML = '<label for="negaraLainnya">Tulis Negara Tujuan <span class="req">*</span></label>' +
+  '<input type="text" id="negaraLainnya" placeholder="Contoh: Qatar">';
+negaraSel.parentElement.after(negaraWrap);
+negaraSel.addEventListener("change", () => {
+  const lain = negaraSel.value === "Lainnya";
+  negaraWrap.style.display = lain ? "block" : "none";
+  if (!lain) $("negaraLainnya").value = "";
+});
+
+// Status: tampilkan bagian alumni hanya untuk Lulusan / Alumni
+document.querySelectorAll('input[name="status"]').forEach(r => {
+  r.addEventListener("change", () => {
+    document.querySelectorAll("#statusGroup label").forEach(l => l.classList.remove("active"));
+    r.parentElement.classList.add("active");
+    const isAlumni = r.value === "Lulusan / Alumni";
+    alumniBox.classList.toggle("hidden", !isAlumni);
+    if (!isAlumni) clearAlumni();
+  });
+});
+
+function clearAlumni() {
+  ["asalLKP","tahunLulus","noSertifikat","statusKerja","negara","pekerjaanLN"]
+    .forEach(id => { $(id).value = ""; setErr(id, false); });
+}
+
+// Input angka saja
+$("nik").addEventListener("input", e => e.target.value = e.target.value.replace(/\D/g, "").slice(0, 16));
+$("telp").addEventListener("input", e => e.target.value = e.target.value.replace(/\D/g, ""));
+
+// Validasi helper
+function setErr(id, show) {
+  const el = $(id), err = $("err-" + id);
+  if (el) el.classList.toggle("invalid", show);
+  if (err) err.style.display = show ? "block" : "none";
+}
+
+function resetAll() {
+  $("formPeserta").reset();
+  kab.innerHTML = '<option value="">Pilih provinsi terlebih dahulu</option>';
+  kab.disabled = true;
+  ket.innerHTML = '<option value="">Pilih tipe program terlebih dahulu</option>';
+  alumniBox.classList.add("hidden");
+  document.querySelectorAll("#statusGroup label").forEach((l, i) => l.classList.toggle("active", i === 0));
+  document.querySelectorAll(".invalid").forEach(el => el.classList.remove("invalid"));
+  document.querySelectorAll(".error-msg").forEach(el => el.style.display = "none");
+  $("result").style.display = "none";
+}
+
+/* ==========================================================
+   SUBMIT
+   ========================================================== */
+$("formPeserta").addEventListener("submit", e => {
+  e.preventDefault();
+  const v = id => $(id).value.trim();
+  const status = document.querySelector('input[name="status"]:checked').value;
+  const isAlumni = status === "Lulusan / Alumni";
+
+  const checks = [
+    ["nik", /^\d{16}$/.test(v("nik"))],
+    ["nama", v("nama") !== ""],
+    ["jk", v("jk") !== ""],
+    ["tgl", v("tgl") !== ""],
+    ["pendidikan", v("pendidikan") !== ""],
+    ["prov", v("prov") !== ""],
+    ["kab", v("kab") !== ""],
+    ["tipe", v("tipe") !== ""],
+    ["keterampilan", v("keterampilan") !== ""],
+    ["asalLKP", !isAlumni || v("asalLKP") !== ""],
+    ["tahunLulus", !isAlumni || v("tahunLulus") !== ""],
+    ["negaraLainnya", !isAlumni || v("negara") !== "Lainnya" || v("negaraLainnya") !== ""]
+  ];
+
+  let ok = true;
+  checks.forEach(([id, valid]) => { setErr(id, !valid); if (!valid) ok = false; });
+
+  const result = $("result");
+  if (!ok) {
+    result.style.display = "none";
+    document.querySelector(".invalid")?.scrollIntoView({ behavior: "smooth", block: "center" });
+    return;
+  }
+
+  const data = {
+    nik: v("nik"),
+    nama: v("nama"),
+    jenisKelamin: v("jk"),
+    tanggalLahir: v("tgl"),
+    telepon: v("telp") || null,
+    pendidikanTerakhir: v("pendidikan"),
+    provinsi: v("prov"),
+    kabupatenKota: v("kab"),
+    tipeProgram: v("tipe"),
+    tahunBantuan: v("tahun"),
+    jenisKeterampilan: v("keterampilan"),
+    statusPeserta: status,
+    ...(isAlumni && {
+      asalLKP: v("asalLKP"),
+      tahunLulus: v("tahunLulus"),
+      noSertifikat: v("noSertifikat") || null,
+      statusBekerja: v("statusKerja") || null,
+      negaraTujuan: v("negara") === "Lainnya" ? v("negaraLainnya") : (v("negara") || null),
+      pekerjaanNegaraTujuan: v("pekerjaanLN") || null
+    })
+  };
+
+  kirimData(data, result);
+});
+
+/* ==========================================================
+   PENYIMPANAN: kirim ke API Vercel (/api/submit)
+   ========================================================== */
+async function kirimData(data, result) {
+  result.style.display = "block";
+  result.style.background = "#eef2ff";
+  result.style.borderColor = "#c7d2fe";
+  result.style.color = "#3730a3";
+  result.innerHTML = "Menyimpan data...";
+  try {
+    const r = await fetch("/api/submit", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data)
+    });
+    const res = await r.json();
+    if (res.status === "ok") {
+      resetAll();
+      result.style.display = "block";
+      result.style.background = "#ecfdf5";
+      result.style.borderColor = "#a7f3d0";
+      result.style.color = "#065f46";
+      result.innerHTML = "<strong>✔ Data peserta berhasil disimpan.</strong>";
+    } else {
+      result.style.background = "#fef2f2";
+      result.style.borderColor = "#fecaca";
+      result.style.color = "#991b1b";
+      result.innerHTML = "<strong>⚠ " + res.message + "</strong>";
+    }
+  } catch (err) {
+    result.style.background = "#fef2f2";
+    result.style.borderColor = "#fecaca";
+    result.style.color = "#991b1b";
+    result.innerHTML = "<strong>⚠ Gagal terhubung ke server.</strong>";
+  }
+  result.scrollIntoView({ behavior: "smooth" });
+}
+
+</script>
+</body>
+</html>

@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard Super Admin - Pendataan Peserta</title>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: "Segoe UI", Roboto, Arial, sans-serif; background: #f1f5f9; margin: 0; color: #0f172a; }
+  header { background: #4f46e5; color: #fff; padding: 16px 24px; display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+  header h1 { font-size: 18px; margin: 0; }
+  main { padding: 24px; max-width: 1300px; margin: auto; }
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 20px; }
+  .card { background: #fff; border-radius: 12px; padding: 16px; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+  .card small { color: #64748b; font-size: 12px; text-transform: uppercase; font-weight: 700; }
+  .card b { display: block; font-size: 26px; margin-top: 6px; }
+  .toolbar { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 12px; }
+  .toolbar input, .toolbar select { padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; background: #fff; }
+  .toolbar input { flex: 1; min-width: 220px; }
+  .btn { padding: 10px 16px; border-radius: 8px; border: 1px solid #4f46e5; background: #4f46e5; color: #fff; font-weight: 700; cursor: pointer; font-size: 14px; }
+  .btn.light { background: #fff; color: #4f46e5; }
+  .btn.light.onDark { background: #fff; color: #4f46e5; border-color: #fff; }
+  .table-wrap { background: #fff; border-radius: 12px; overflow: auto; max-height: 70vh; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+  table { border-collapse: collapse; width: 100%; font-size: 13px; }
+  th, td { padding: 10px 12px; border-bottom: 1px solid #e2e8f0; text-align: left; white-space: nowrap; }
+  th { background: #f8fafc; font-size: 12px; text-transform: uppercase; color: #334155; position: sticky; top: 0; }
+  .count { color: #64748b; font-size: 13px; margin: 6px 0 10px; }
+  .login { max-width: 360px; margin: 14vh auto; background: #fff; padding: 28px; border-radius: 14px; box-shadow: 0 10px 30px rgba(0,0,0,.1); }
+  .login h2 { margin: 0 0 6px; }
+  .login p { color: #64748b; font-size: 14px; margin: 0; }
+  .login input { width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; margin: 14px 0 8px; font-size: 15px; }
+  .login .btn { width: 100%; }
+  .err { color: #dc2626; font-size: 13px; min-height: 18px; }
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="loginView" class="login">
+  <h2>Login Super Admin</h2>
+  <p>Masukkan password admin untuk melihat data peserta.</p>
+  <input type="password" id="pw" placeholder="Password admin" onkeydown="if(event.key==='Enter')login()">
+  <button class="btn" onclick="login()">Masuk</button>
+  <div class="err" id="loginErr"></div>
+</div>
+
+<!-- DASHBOARD -->
+<div id="dashView" class="hidden">
+  <header>
+    <h1>Dashboard Pendataan Peserta</h1>
+    <button class="btn light onDark" onclick="logout()">Keluar</button>
+  </header>
+  <main>
+    <div class="cards">
+      <div class="card"><small>Total peserta</small><b id="cTotal">0</b></div>
+      <div class="card"><small>Peserta aktif</small><b id="cAktif">0</b></div>
+      <div class="card"><small>Lulusan / Alumni</small><b id="cAlumni">0</b></div>
+      <div class="card"><small>Bekerja di luar negeri</small><b id="cLN">0</b></div>
+      <div class="card"><small>Tipe PKW</small><b id="cPKW">0</b></div>
+      <div class="card"><small>Tipe PKK</small><b id="cPKK">0</b></div>
+    </div>
+
+    <div class="toolbar">
+      <input id="q" placeholder="Cari nama, NIK, asal LKP, keterampilan..." oninput="render()">
+      <select id="fProv" onchange="render()"><option value="">Semua provinsi</option></select>
+      <select id="fTipe" onchange="render()">
+        <option value="">Semua tipe</option><option>PKW</option><option>PKK</option>
+      </select>
+      <select id="fTahun" onchange="render()"><option value="">Semua tahun bantuan</option></select>
+      <select id="fStatus" onchange="render()">
+        <option value="">Semua status</option><option>Peserta Aktif</option><option>Lulusan / Alumni</option>
+      </select>
+      <button class="btn light" onclick="loadData()">Muat ulang</button>
+      <button class="btn" onclick="exportCSV()">Unduh CSV</button>
+    </div>
+    <div class="count" id="count"></div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr id="thead"></tr></thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+  </main>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+
+const COLS = [
+  ["created_at", "Waktu"], ["nik", "NIK"], ["nama", "Nama"], ["jenis_kelamin", "JK"],
+  ["tanggal_lahir", "Tgl Lahir"], ["telepon", "Telepon"], ["pendidikan_terakhir", "Pendidikan"],
+  ["provinsi", "Provinsi"], ["kabupaten_kota", "Kab/Kota"], ["tipe_program", "Tipe"],
+  ["tahun_bantuan", "Tahun Bantuan"], ["jenis_keterampilan", "Keterampilan"],
+  ["status_peserta", "Status"], ["asal_lkp", "Asal LKP"], ["tahun_lulus", "Tahun Lulus"],
+  ["no_sertifikat", "No. Sertifikat"], ["status_bekerja", "Status Bekerja"],
+  ["negara_tujuan", "Negara Tujuan"], ["pekerjaan_negara_tujuan", "Pekerjaan LN"]
+];
+
+let data = [];
+$("thead").innerHTML = COLS.map(c => "<th>" + c[1] + "</th>").join("");
+
+function tampilkan(view) {
+  $("loginView").classList.toggle("hidden", view !== "login");
+  $("dashView").classList.toggle("hidden", view !== "dash");
+}
+
+async function login() {
+  const r = await fetch("/api/login", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ password: $("pw").value })
+  });
+  if (r.ok) {
+    $("pw").value = "";
+    $("loginErr").textContent = "";
+    loadData();
+  } else {
+    $("loginErr").textContent = "Password salah";
+  }
+}
+
+async function logout() {
+  await fetch("/api/logout", { method: "POST" });
+  tampilkan("login");
+}
+
+async function loadData() {
+  const r = await fetch("/api/peserta");
+  if (r.status === 401) { tampilkan("login"); return; }
+  const j = await r.json();
+  data = j.rows || [];
+  tampilkan("dash");
+  isiFilter();
+  renderStats();
+  render();
+}
+
+function isiFilter() {
+  const provs = [...new Set(data.map(d => d.provinsi).filter(Boolean))].sort();
+  const tahun = [...new Set(data.map(d => d.tahun_bantuan).filter(Boolean))].sort((a, b) => b - a);
+  const selP = $("fProv"), curP = selP.value;
+  selP.innerHTML = '<option value="">Semua provinsi</option>' +
+    provs.map(p => "<option>" + esc(p) + "</option>").join("");
+  selP.value = curP;
+
+  const selT = $("fTahun"), curT = selT.value;
+  selT.innerHTML = '<option value="">Semua tahun bantuan</option>' +
+    tahun.map(t => "<option>" + t + "</option>").join("");
+  selT.value = curT;
+}
+
+function renderStats() {
+  $("cTotal").textContent = data.length;
+  $("cAktif").textContent = data.filter(d => d.status_peserta === "Peserta Aktif").length;
+  $("cAlumni").textContent = data.filter(d => d.status_peserta === "Lulusan / Alumni").length;
+  $("cLN").textContent = data.filter(d => d.status_bekerja === "Bekerja di Luar Negeri").length;
+  $("cPKW").textContent = data.filter(d => d.tipe_program === "PKW").length;
+  $("cPKK").textContent = data.filter(d => d.tipe_program === "PKK").length;
+}
+
+function filtered() {
+  const q = $("q").value.trim().toLowerCase();
+  return data.filter(d => {
+    if ($("fProv").value && d.provinsi !== $("fProv").value) return false;
+    if ($("fTipe").value && d.tipe_program !== $("fTipe").value) return false;
+    if ($("fTahun").value && String(d.tahun_bantuan) !== $("fTahun").value) return false;
+    if ($("fStatus").value && d.status_peserta !== $("fStatus").value) return false;
+    if (q) {
+      const teks = [d.nama, d.nik, d.asal_lkp, d.jenis_keterampilan, d.provinsi].join(" ").toLowerCase();
+      if (!teks.includes(q)) return false;
+    }
+    return true;
+  });
+}
+
+function render() {
+  const rows = filtered();
+  $("count").textContent = "Menampilkan " + rows.length + " dari " + data.length + " data";
+  $("tbody").innerHTML = rows.map(d =>
+    "<tr>" + COLS.map(c => "<td>" + esc(fmt(c[0], d[c[0]])) + "</td>").join("") + "</tr>"
+  ).join("");
+}
+
+function fmt(key, val) {
+  if (val === null || val === undefined) return "";
+  if (key === "created_at") return new Date(val).toLocaleString("id-ID", { timeZone: "Asia/Jakarta" });
+  if (key === "tanggal_lahir") return String(val).slice(0, 10);
+  return String(val);
+}
+
+function esc(s) {
+  return String(s).replace(/[&<>"']/g, m => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[m]));
+}
+
+function exportCSV() {
+  const rows = filtered();
+  const head = COLS.map(c => '"' + c[1] + '"').join(",");
+  const body = rows.map(d =>
+    COLS.map(c => '"' + String(fmt(c[0], d[c[0]])).replace(/"/g, '""') + '"').join(",")
+  ).join("\n");
+  const blob = new Blob(["\uFEFF" + head + "\n" + body], { type: "text/csv;charset=utf-8" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "data-peserta.csv";
+  a.click();
+}
+
+loadData();
+</script>
+</body>
+</html>
