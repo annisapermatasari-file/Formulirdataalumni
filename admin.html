@@ -32,6 +32,20 @@
   .login .btn { width: 100%; }
   .err { color: #dc2626; font-size: 13px; min-height: 18px; }
   .hidden { display: none !important; }
+  .view-tabs { display: flex; gap: 8px; margin-bottom: 16px; border-bottom: 1px solid #cbd5e1; }
+  .view-tab { padding: 10px 14px; border: 0; border-bottom: 3px solid transparent; background: transparent; color: #475569; cursor: pointer; font: inherit; font-weight: 700; }
+  .view-tab.active { color: #4f46e5; border-bottom-color: #4f46e5; }
+  .chart-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin-bottom: 20px; }
+  .chart-panel { min-width: 0; background: #fff; border-radius: 8px; padding: 18px; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+  .chart-panel h2 { margin: 0 0 14px; font-size: 16px; }
+  .chart-list { display: grid; gap: 12px; }
+  .chart-row { display: grid; grid-template-columns: minmax(90px, 1fr) minmax(80px, 2fr) 44px; align-items: center; gap: 10px; font-size: 13px; }
+  .chart-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .chart-track { height: 10px; overflow: hidden; border-radius: 5px; background: #e2e8f0; }
+  .chart-fill { height: 100%; min-width: 0; border-radius: inherit; transition: width .25s ease; }
+  .chart-value { text-align: right; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .chart-empty { color: #64748b; font-size: 13px; }
+  @media (max-width: 700px) { main { padding: 16px; } .chart-grid { grid-template-columns: 1fr; } }
 </style>
 </head>
 <body>
@@ -52,6 +66,10 @@
     <button class="btn light onDark" onclick="logout()">Keluar</button>
   </header>
   <main>
+    <nav class="view-tabs" aria-label="Menu dashboard">
+      <button type="button" class="view-tab active" id="tabData" aria-selected="true" onclick="switchView('data')">Data Peserta</button>
+      <button type="button" class="view-tab" id="tabRecap" aria-selected="false" onclick="switchView('recap')">Rekap Hasil</button>
+    </nav>
     <div class="cards">
       <div class="card"><small>Total peserta</small><b id="cTotal">0</b></div>
       <div class="card"><small>Peserta aktif</small><b id="cAktif">0</b></div>
@@ -73,15 +91,25 @@
         <option value="">Semua status</option><option>Peserta Aktif</option><option>Lulusan / Alumni</option>
       </select>
       <button class="btn light" onclick="loadData()">Muat ulang</button>
-      <button class="btn" onclick="exportCSV()">Unduh CSV</button>
+      <button class="btn" onclick="exportExcel()">Unduh Excel</button>
     </div>
-    <div class="count" id="count"></div>
-    <div class="table-wrap">
-      <table>
-        <thead><tr id="thead"></tr></thead>
-        <tbody id="tbody"></tbody>
-      </table>
-    </div>
+    <section id="recapView" class="hidden" aria-label="Rekap hasil peserta">
+      <div class="chart-grid">
+        <section class="chart-panel"><h2>Peserta per Program</h2><div class="chart-list" id="chartProgram"></div></section>
+        <section class="chart-panel"><h2>Status Peserta</h2><div class="chart-list" id="chartStatus"></div></section>
+        <section class="chart-panel"><h2>Peserta per Provinsi</h2><div class="chart-list" id="chartProvinsi"></div></section>
+        <section class="chart-panel"><h2>Peserta per Tahun Bantuan</h2><div class="chart-list" id="chartTahun"></div></section>
+      </div>
+    </section>
+    <section id="tableView" aria-label="Data peserta">
+      <div class="count" id="count"></div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr id="thead"></tr></thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+    </section>
   </main>
 </div>
 
@@ -105,6 +133,16 @@ $("thead").innerHTML = COLS.map(c => "<th>" + c[1] + "</th>").join("");
 function tampilkan(view) {
   $("loginView").classList.toggle("hidden", view !== "login");
   $("dashView").classList.toggle("hidden", view !== "dash");
+}
+
+function switchView(view) {
+  const showRecap = view === "recap";
+  $("recapView").classList.toggle("hidden", !showRecap);
+  $("tableView").classList.toggle("hidden", showRecap);
+  $("tabData").classList.toggle("active", !showRecap);
+  $("tabRecap").classList.toggle("active", showRecap);
+  $("tabData").setAttribute("aria-selected", String(!showRecap));
+  $("tabRecap").setAttribute("aria-selected", String(showRecap));
 }
 
 async function login() {
@@ -183,6 +221,43 @@ function render() {
   $("tbody").innerHTML = rows.map(d =>
     "<tr>" + COLS.map(c => "<td>" + esc(fmt(c[0], d[c[0]])) + "</td>").join("") + "</tr>"
   ).join("");
+  renderCharts(rows);
+}
+
+function chartEntries(rows, key, fixedLabels) {
+  const counts = new Map();
+  rows.forEach(row => {
+    const label = row[key];
+    if (label !== null && label !== undefined && String(label).trim()) {
+      const value = String(label);
+      counts.set(value, (counts.get(value) || 0) + 1);
+    }
+  });
+  if (fixedLabels) return fixedLabels.map(label => [label, counts.get(label) || 0]);
+  return [...counts.entries()].sort((a, b) => b[1] - a[1]);
+}
+
+function renderChart(id, entries, colors) {
+  const list = $(id);
+  if (!entries.length) {
+    list.innerHTML = '<div class="chart-empty">Belum ada data untuk filter ini.</div>';
+    return;
+  }
+  const max = Math.max(...entries.map(([, count]) => count), 1);
+  list.innerHTML = entries.map(([label, count], index) => {
+    const width = count ? Math.max(3, count / max * 100) : 0;
+    return '<div class="chart-row"><span class="chart-label" title="' + esc(label) + '">' + esc(label) +
+      '</span><div class="chart-track"><div class="chart-fill" style="width:' + width + '%;background:' + colors[index % colors.length] +
+      '"></div></div><span class="chart-value">' + count + '</span></div>';
+  }).join("");
+}
+
+function renderCharts(rows) {
+  renderChart("chartProgram", chartEntries(rows, "tipe_program", ["PKW", "PKK", "MANDIRI"]), ["#e76f51", "#2a9d8f", "#e9a23b"]);
+  renderChart("chartStatus", chartEntries(rows, "status_peserta", ["Peserta Aktif", "Lulusan / Alumni"]), ["#2878b5", "#7c6bb1"]);
+  renderChart("chartProvinsi", chartEntries(rows, "provinsi").slice(0, 8), ["#2a9d8f", "#e76f51", "#2878b5", "#e9a23b"]);
+  const years = chartEntries(rows, "tahun_bantuan").sort((a, b) => Number(b[0]) - Number(a[0])).slice(0, 8);
+  renderChart("chartTahun", years, ["#2878b5", "#2a9d8f", "#e76f51", "#e9a23b"]);
 }
 
 function fmt(key, val) {
@@ -196,17 +271,26 @@ function esc(s) {
   return String(s).replace(/[&<>"']/g, m => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[m]));
 }
 
-function exportCSV() {
+function xmlEsc(value) {
+  return String(value).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;").replace(/'/g, "&apos;");
+}
+
+function exportExcel() {
   const rows = filtered();
-  const head = COLS.map(c => '"' + c[1] + '"').join(",");
-  const body = rows.map(d =>
-    COLS.map(c => '"' + String(fmt(c[0], d[c[0]])).replace(/"/g, '""') + '"').join(",")
-  ).join("\n");
-  const blob = new Blob(["\uFEFF" + head + "\n" + body], { type: "text/csv;charset=utf-8" });
+  const header = "<Row>" + COLS.map(c => '<Cell ss:StyleID="Header"><Data ss:Type="String">' + xmlEsc(c[1]) + "</Data></Cell>").join("") + "</Row>";
+  const body = rows.map(row => "<Row>" + COLS.map(c => '<Cell><Data ss:Type="String">' + xmlEsc(fmt(c[0], row[c[0]])) + "</Data></Cell>").join("") + "</Row>").join("");
+  const workbook = '<?xml version="1.0" encoding="UTF-8"?><?mso-application progid="Excel.Sheet"?>' +
+    '<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">' +
+    '<Styles><Style ss:ID="Header"><Font ss:Bold="1"/><Interior ss:Color="#DCE6F1" ss:Pattern="Solid"/></Style></Styles>' +
+    '<Worksheet ss:Name="Data Peserta"><Table>' + header + body + "</Table></Worksheet></Workbook>";
+  const blob = new Blob(["\uFEFF" + workbook], { type: "application/vnd.ms-excel;charset=utf-8" });
   const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = "data-peserta.csv";
+  const url = URL.createObjectURL(blob);
+  a.href = url;
+  a.download = "data-peserta-" + new Date().toISOString().slice(0, 10) + ".xls";
   a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
 loadData();

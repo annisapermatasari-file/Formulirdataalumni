@@ -156,7 +156,7 @@
 
       <div>
         <label for="telp">No. Telepon / WhatsApp <span class="req">*</span></label>
-        <input type="tel" id="telp" inputmode="numeric" maxlength="15" placeholder="Contoh: 08123456789">
+        <input type="tel" id="telp" inputmode="numeric" minlength="9" maxlength="15" pattern="[0-9]{9,15}" placeholder="Contoh: 08123456789" required>
         <div class="error-msg" id="err-telp">Nomor telepon wajib diisi (9-15 digit angka)</div>
       </div>
       <div>
