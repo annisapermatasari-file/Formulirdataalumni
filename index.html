@@ -155,8 +155,9 @@
       </div>
 
       <div>
-        <label for="telp">No. Telepon / WhatsApp <span class="opt">(Opsional)</span></label>
-        <input type="tel" id="telp" inputmode="numeric" placeholder="Contoh: 08123456789">
+        <label for="telp">No. Telepon / WhatsApp <span class="req">*</span></label>
+        <input type="tel" id="telp" inputmode="numeric" maxlength="15" placeholder="Contoh: 08123456789">
+        <div class="error-msg" id="err-telp">Nomor telepon wajib diisi (9-15 digit angka)</div>
       </div>
       <div>
         <label for="pendidikan">Pendidikan Terakhir <span class="req">*</span></label>
@@ -195,6 +196,7 @@
           <option value="">Pilih Tipe Program</option>
           <option value="PKW">PKW - Pendidikan Kecakapan Wirausaha</option>
           <option value="PKK">PKK - Pendidikan Kecakapan Kerja</option>
+          <option value="MANDIRI">Program Mandiri</option>
         </select>
         <div class="error-msg" id="err-tipe">Pilih tipe program</div>
       </div>
@@ -263,6 +265,11 @@
             <option>Korea Selatan</option>
             <option>Lainnya</option>
           </select>
+        </div>
+
+        <div class="full">
+          <label for="namaIndustri">Nama Tempat Industri Bekerja <span class="opt">(Opsional)</span></label>
+          <input type="text" id="namaIndustri" placeholder="Nama perusahaan / industri tempat bekerja">
         </div>
 
         <div class="full">
@@ -521,6 +528,16 @@ const KETERAMPILAN = {
   ]
 };
 
+// Program Mandiri: memakai gabungan daftar keterampilan PKW dan PKK
+(function () {
+  const map = {};
+  [...KETERAMPILAN.PKW, ...KETERAMPILAN.PKK].forEach(g => {
+    if (!map[g.g]) map[g.g] = [];
+    g.items.forEach(it => { if (!map[g.g].includes(it)) map[g.g].push(it); });
+  });
+  KETERAMPILAN.MANDIRI = Object.keys(map).map(k => ({ g: k, items: map[k] }));
+})();
+
 /* ==========================================================
    ELEMEN & INISIALISASI
    ========================================================== */
@@ -598,7 +615,7 @@ document.querySelectorAll('input[name="status"]').forEach(r => {
 });
 
 function clearAlumni() {
-  ["asalLKP","tahunLulus","noSertifikat","statusKerja","negara","pekerjaanLN"]
+  ["asalLKP","tahunLulus","noSertifikat","statusKerja","negara","namaIndustri","pekerjaanLN"]
     .forEach(id => { $(id).value = ""; setErr(id, false); });
 }
 
@@ -636,6 +653,7 @@ $("formPeserta").addEventListener("submit", e => {
 
   const checks = [
     ["nik", /^\d{16}$/.test(v("nik"))],
+    ["telp", /^\d{9,15}$/.test(v("telp"))],
     ["nama", v("nama") !== ""],
     ["jk", v("jk") !== ""],
     ["tgl", v("tgl") !== ""],
@@ -664,7 +682,7 @@ $("formPeserta").addEventListener("submit", e => {
     nama: v("nama"),
     jenisKelamin: v("jk"),
     tanggalLahir: v("tgl"),
-    telepon: v("telp") || null,
+    telepon: v("telp"),
     pendidikanTerakhir: v("pendidikan"),
     provinsi: v("prov"),
     kabupatenKota: v("kab"),
@@ -678,6 +696,7 @@ $("formPeserta").addEventListener("submit", e => {
       noSertifikat: v("noSertifikat") || null,
       statusBekerja: v("statusKerja") || null,
       negaraTujuan: v("negara") === "Lainnya" ? v("negaraLainnya") : (v("negara") || null),
+      namaTempatIndustri: v("namaIndustri") || null,
       pekerjaanNegaraTujuan: v("pekerjaanLN") || null
     })
   };

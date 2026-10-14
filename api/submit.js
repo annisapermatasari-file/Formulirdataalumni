@@ -16,6 +16,12 @@ module.exports = async (req, res) => {
   if (!txt(d.nama)) {
     return res.status(400).json({ status: 'error', message: 'Nama wajib diisi' });
   }
+  if (!/^\d{9,15}$/.test(String(d.telepon || ''))) {
+    return res.status(400).json({ status: 'error', message: 'Nomor telepon wajib diisi (9-15 digit angka)' });
+  }
+  if (!['PKW', 'PKK', 'MANDIRI'].includes(d.tipeProgram)) {
+    return res.status(400).json({ status: 'error', message: 'Tipe program tidak valid' });
+  }
 
   const wajib = ['jenisKelamin', 'tanggalLahir', 'pendidikanTerakhir', 'provinsi',
     'kabupatenKota', 'tipeProgram', 'tahunBantuan', 'jenisKeterampilan', 'statusPeserta'];
@@ -35,14 +41,14 @@ module.exports = async (req, res) => {
         nik, nama, jenis_kelamin, tanggal_lahir, telepon, pendidikan_terakhir,
         provinsi, kabupaten_kota, tipe_program, tahun_bantuan, jenis_keterampilan,
         status_peserta, asal_lkp, tahun_lulus, no_sertifikat, status_bekerja,
-        negara_tujuan, pekerjaan_negara_tujuan
+        negara_tujuan, nama_tempat_industri, pekerjaan_negara_tujuan
       ) VALUES (
         ${d.nik}, ${txt(d.nama)}, ${txt(d.jenisKelamin)}, ${txt(d.tanggalLahir)},
         ${txt(d.telepon)}, ${txt(d.pendidikanTerakhir)}, ${txt(d.provinsi)},
         ${txt(d.kabupatenKota)}, ${txt(d.tipeProgram)}, ${num(d.tahunBantuan)},
         ${txt(d.jenisKeterampilan)}, ${txt(d.statusPeserta)}, ${txt(d.asalLKP)},
         ${num(d.tahunLulus)}, ${txt(d.noSertifikat)}, ${txt(d.statusBekerja)},
-        ${txt(d.negaraTujuan)}, ${txt(d.pekerjaanNegaraTujuan)}
+        ${txt(d.negaraTujuan)}, ${txt(d.namaTempatIndustri)}, ${txt(d.pekerjaanNegaraTujuan)}
       )
     `;
     return res.status(200).json({ status: 'ok' });

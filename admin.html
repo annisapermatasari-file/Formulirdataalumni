@@ -59,13 +59,14 @@
       <div class="card"><small>Bekerja di luar negeri</small><b id="cLN">0</b></div>
       <div class="card"><small>Tipe PKW</small><b id="cPKW">0</b></div>
       <div class="card"><small>Tipe PKK</small><b id="cPKK">0</b></div>
+      <div class="card"><small>Program Mandiri</small><b id="cMandiri">0</b></div>
     </div>
 
     <div class="toolbar">
       <input id="q" placeholder="Cari nama, NIK, asal LKP, keterampilan..." oninput="render()">
       <select id="fProv" onchange="render()"><option value="">Semua provinsi</option></select>
       <select id="fTipe" onchange="render()">
-        <option value="">Semua tipe</option><option>PKW</option><option>PKK</option>
+        <option value="">Semua tipe</option><option>PKW</option><option>PKK</option><option>MANDIRI</option>
       </select>
       <select id="fTahun" onchange="render()"><option value="">Semua tahun bantuan</option></select>
       <select id="fStatus" onchange="render()">
@@ -94,7 +95,8 @@ const COLS = [
   ["tahun_bantuan", "Tahun Bantuan"], ["jenis_keterampilan", "Keterampilan"],
   ["status_peserta", "Status"], ["asal_lkp", "Asal LKP"], ["tahun_lulus", "Tahun Lulus"],
   ["no_sertifikat", "No. Sertifikat"], ["status_bekerja", "Status Bekerja"],
-  ["negara_tujuan", "Negara Tujuan"], ["pekerjaan_negara_tujuan", "Pekerjaan LN"]
+  ["negara_tujuan", "Negara Tujuan"], ["nama_tempat_industri", "Tempat Industri Bekerja"],
+  ["pekerjaan_negara_tujuan", "Pekerjaan LN"]
 ];
 
 let data = [];
@@ -157,6 +159,7 @@ function renderStats() {
   $("cLN").textContent = data.filter(d => d.status_bekerja === "Bekerja di Luar Negeri").length;
   $("cPKW").textContent = data.filter(d => d.tipe_program === "PKW").length;
   $("cPKK").textContent = data.filter(d => d.tipe_program === "PKK").length;
+  $("cMandiri").textContent = data.filter(d => d.tipe_program === "MANDIRI").length;
 }
 
 function filtered() {
