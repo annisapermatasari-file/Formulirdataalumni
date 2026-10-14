@@ -67,8 +67,8 @@
   </header>
   <main>
     <nav class="view-tabs" aria-label="Menu dashboard">
-      <button type="button" class="view-tab active" id="tabData" aria-selected="true" onclick="switchView('data')">Data Peserta</button>
-      <button type="button" class="view-tab" id="tabRecap" aria-selected="false" onclick="switchView('recap')">Rekap Hasil</button>
+      <button type="button" class="view-tab" id="tabData" aria-selected="false" onclick="switchView('data')">Data Peserta</button>
+      <button type="button" class="view-tab active" id="tabRecap" aria-selected="true" onclick="switchView('recap')">Rekap Hasil</button>
     </nav>
     <div class="cards">
       <div class="card"><small>Total peserta</small><b id="cTotal">0</b></div>
@@ -93,7 +93,7 @@
       <button class="btn light" onclick="loadData()">Muat ulang</button>
       <button class="btn" onclick="exportExcel()">Unduh Excel</button>
     </div>
-    <section id="recapView" class="hidden" aria-label="Rekap hasil peserta">
+    <section id="recapView" aria-label="Rekap hasil peserta">
       <div class="chart-grid">
         <section class="chart-panel"><h2>Peserta per Program</h2><div class="chart-list" id="chartProgram"></div></section>
         <section class="chart-panel"><h2>Status Peserta</h2><div class="chart-list" id="chartStatus"></div></section>
@@ -101,7 +101,7 @@
         <section class="chart-panel"><h2>Peserta per Tahun Bantuan</h2><div class="chart-list" id="chartTahun"></div></section>
       </div>
     </section>
-    <section id="tableView" aria-label="Data peserta">
+    <section id="tableView" class="hidden" aria-label="Data peserta">
       <div class="count" id="count"></div>
       <div class="table-wrap">
         <table>
