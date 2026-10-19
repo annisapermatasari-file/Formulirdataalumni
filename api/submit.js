@@ -33,6 +33,12 @@ module.exports = async (req, res) => {
   if (isAlumni && (!txt(d.asalLKP) || !txt(d.tahunLulus))) {
     return res.status(400).json({ status: 'error', message: 'Asal LKP dan tahun lulus wajib diisi' });
   }
+  if (isAlumni && !['Sudah', 'Belum'].includes(d.ikutPelepasan)) {
+    return res.status(400).json({ status: 'error', message: 'Pilih status kegiatan pelepasan' });
+  }
+  if (isAlumni && d.ikutPelepasan === 'Sudah' && !txt(d.namaPelepasan)) {
+    return res.status(400).json({ status: 'error', message: 'Nama kegiatan pelepasan wajib diisi' });
+  }
 
   try {
     await ensureTable();
@@ -41,14 +47,16 @@ module.exports = async (req, res) => {
         nik, nama, jenis_kelamin, tanggal_lahir, telepon, pendidikan_terakhir,
         provinsi, kabupaten_kota, tipe_program, tahun_bantuan, jenis_keterampilan,
         status_peserta, asal_lkp, tahun_lulus, no_sertifikat, status_bekerja,
-        negara_tujuan, nama_tempat_industri, pekerjaan_negara_tujuan
+        negara_tujuan, nama_tempat_industri, pekerjaan_negara_tujuan,
+        ikut_pelepasan, nama_pelepasan
       ) VALUES (
         ${d.nik}, ${txt(d.nama)}, ${txt(d.jenisKelamin)}, ${txt(d.tanggalLahir)},
         ${txt(d.telepon)}, ${txt(d.pendidikanTerakhir)}, ${txt(d.provinsi)},
         ${txt(d.kabupatenKota)}, ${txt(d.tipeProgram)}, ${num(d.tahunBantuan)},
         ${txt(d.jenisKeterampilan)}, ${txt(d.statusPeserta)}, ${txt(d.asalLKP)},
         ${num(d.tahunLulus)}, ${txt(d.noSertifikat)}, ${txt(d.statusBekerja)},
-        ${txt(d.negaraTujuan)}, ${txt(d.namaTempatIndustri)}, ${txt(d.pekerjaanNegaraTujuan)}
+        ${txt(d.negaraTujuan)}, ${txt(d.namaTempatIndustri)}, ${txt(d.pekerjaanNegaraTujuan)},
+        ${txt(d.ikutPelepasan)}, ${txt(d.namaPelepasan)}
       )
     `;
     return res.status(200).json({ status: 'ok' });

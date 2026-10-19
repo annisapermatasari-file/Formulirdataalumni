@@ -235,6 +235,20 @@
           <div class="error-msg" id="err-tahunLulus">Pilih tahun lulus</div>
         </div>
         <div>
+          <label for="ikutPelepasan">Mengikuti Kegiatan Pelepasan <span class="req">*</span></label>
+          <select id="ikutPelepasan">
+            <option value="">Pilih jawaban</option>
+            <option value="Sudah">Sudah</option>
+            <option value="Belum">Belum</option>
+          </select>
+          <div class="error-msg" id="err-ikutPelepasan">Pilih apakah sudah mengikuti kegiatan pelepasan</div>
+        </div>
+        <div class="full hidden" id="namaPelepasanWrap">
+          <label for="namaPelepasan">Nama Kegiatan Pelepasan <span class="req">*</span></label>
+          <input type="text" id="namaPelepasan" placeholder="Contoh: Pelepasan Alumni Tahun 2025">
+          <div class="error-msg" id="err-namaPelepasan">Nama kegiatan pelepasan wajib diisi</div>
+        </div>
+        <div>
           <label for="noSertifikat">No. Sertifikat <span class="opt">(Opsional)</span></label>
           <input type="text" id="noSertifikat" placeholder="Nomor sertifikat kelulusan">
         </div>
@@ -615,9 +629,18 @@ document.querySelectorAll('input[name="status"]').forEach(r => {
 });
 
 function clearAlumni() {
-  ["asalLKP","tahunLulus","noSertifikat","statusKerja","negara","namaIndustri","pekerjaanLN"]
+  ["asalLKP","tahunLulus","ikutPelepasan","namaPelepasan","noSertifikat","statusKerja","negara","namaIndustri","pekerjaanLN"]
     .forEach(id => { $(id).value = ""; setErr(id, false); });
+  $("namaPelepasanWrap").classList.add("hidden");
 }
+
+$("ikutPelepasan").addEventListener("change", () => {
+  const sudah = $("ikutPelepasan").value === "Sudah";
+  $("namaPelepasanWrap").classList.toggle("hidden", !sudah);
+  if (!sudah) $("namaPelepasan").value = "";
+  setErr("ikutPelepasan", false);
+  setErr("namaPelepasan", false);
+});
 
 // Input angka saja
 $("nik").addEventListener("input", e => e.target.value = e.target.value.replace(/\D/g, "").slice(0, 16));
@@ -664,6 +687,8 @@ $("formPeserta").addEventListener("submit", e => {
     ["keterampilan", v("keterampilan") !== ""],
     ["asalLKP", !isAlumni || v("asalLKP") !== ""],
     ["tahunLulus", !isAlumni || v("tahunLulus") !== ""],
+    ["ikutPelepasan", !isAlumni || ["Sudah", "Belum"].includes(v("ikutPelepasan"))],
+    ["namaPelepasan", !isAlumni || v("ikutPelepasan") !== "Sudah" || v("namaPelepasan") !== ""],
     ["negaraLainnya", !isAlumni || v("negara") !== "Lainnya" || v("negaraLainnya") !== ""]
   ];
 
@@ -693,6 +718,8 @@ $("formPeserta").addEventListener("submit", e => {
     ...(isAlumni && {
       asalLKP: v("asalLKP"),
       tahunLulus: v("tahunLulus"),
+      ikutPelepasan: v("ikutPelepasan"),
+      namaPelepasan: v("namaPelepasan") || null,
       noSertifikat: v("noSertifikat") || null,
       statusBekerja: v("statusKerja") || null,
       negaraTujuan: v("negara") === "Lainnya" ? v("negaraLainnya") : (v("negara") || null),
