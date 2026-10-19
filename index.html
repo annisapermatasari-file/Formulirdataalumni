@@ -633,11 +633,13 @@ function clearAlumni() {
   ["asalLKP","tahunLulus","ikutPelepasan","namaPelepasan","noSertifikat","statusKerja","negara","namaIndustri","pekerjaanLN"]
     .forEach(id => { $(id).value = ""; setErr(id, false); });
   $("namaPelepasanWrap").classList.add("hidden");
+  $("namaPelepasan").required = false;
 }
 
 $("ikutPelepasan").addEventListener("change", () => {
   const jawabYa = $("ikutPelepasan").value === "Ya";
   $("namaPelepasanWrap").classList.toggle("hidden", !jawabYa);
+  $("namaPelepasan").required = jawabYa;
   if (!jawabYa) $("namaPelepasan").value = "";
   setErr("ikutPelepasan", false);
   setErr("namaPelepasan", false);
