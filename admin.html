@@ -132,7 +132,7 @@ const COLS = [
 ];
 
 let data = [];
-$("thead").innerHTML = COLS.map(c => "<th>" + c[1] + "</th>").join("");
+$("thead").innerHTML = COLS.map(c => "<th>" + c[1] + "</th>").join("") + "<th>Aksi</th>";
 
 function tampilkan(view) {
   $("loginView").classList.toggle("hidden", view !== "login");
@@ -223,10 +223,41 @@ function render() {
   const rows = filtered();
   $("count").textContent = "Menampilkan " + rows.length + " dari " + data.length + " data";
   $("tbody").innerHTML = rows.map(d =>
-    "<tr>" + COLS.map(c => "<td>" + esc(fmt(c[0], d[c[0]])) + "</td>").join("") + "</tr>"
+    "<tr>" + COLS.map(c => "<td>" + esc(fmt(c[0], d[c[0]])) + "</td>").join("") +
+      '<td><button type="button" class="btn-delete" data-delete-id="' + esc(d.id) + '" aria-label="Hapus data ' + esc(d.nama) + '">Hapus</button></td></tr>'
   ).join("");
   renderCharts(rows);
 }
+
+async function hapusPeserta(id, button) {
+  const peserta = data.find(row => String(row.id) === String(id));
+  if (!peserta || !window.confirm('Hapus data peserta "' + peserta.nama + '" secara permanen?')) return;
+
+  button.disabled = true;
+  try {
+    const response = await fetch("/api/hapus", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: peserta.id })
+    });
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.message || "Gagal menghapus data peserta");
+
+    data = data.filter(row => String(row.id) !== String(peserta.id));
+    isiFilter();
+    renderStats();
+    render();
+  } catch (error) {
+    window.alert(error.message || "Gagal menghapus data peserta");
+  } finally {
+    if (button.isConnected) button.disabled = false;
+  }
+}
+
+$("tbody").addEventListener("click", event => {
+  const button = event.target.closest("[data-delete-id]");
+  if (button) hapusPeserta(button.dataset.deleteId, button);
+});
 
 function chartEntries(rows, key, fixedLabels) {
   const counts = new Map();
