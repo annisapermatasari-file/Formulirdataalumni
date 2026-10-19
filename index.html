@@ -223,6 +223,21 @@
 
     <div class="alumni-box hidden" id="alumniBox">
       <div class="grid">
+        <div>
+          <label for="ikutPelepasan">Apakah sudah mengikuti kegiatan pelepasan? <span class="req">*</span></label>
+          <select id="ikutPelepasan">
+            <option value="">Pilih jawaban</option>
+            <option value="Ya">Ya</option>
+            <option value="Tidak">Tidak</option>
+          </select>
+          <div class="error-msg" id="err-ikutPelepasan">Pilih Ya atau Tidak</div>
+        </div>
+        <div class="full hidden" id="namaPelepasanWrap">
+          <label for="namaPelepasan">Nama Kegiatan Pelepasan <span class="req">*</span></label>
+          <input type="text" id="namaPelepasan" placeholder="Contoh: Pelepasan 4000 Alumni di Gebyar Kursus Jakarta">
+          <div class="error-msg" id="err-namaPelepasan">Nama kegiatan pelepasan wajib diisi</div>
+        </div>
+
         <div class="full">
           <label for="asalLKP">Asal LKP <span class="req">*</span></label>
           <input type="text" id="asalLKP" placeholder="Nama lembaga kursus asal peserta">
@@ -233,20 +248,6 @@
           <label for="tahunLulus">Tahun Lulus <span class="req">*</span></label>
           <select id="tahunLulus"><option value="">Pilih Tahun Lulus</option></select>
           <div class="error-msg" id="err-tahunLulus">Pilih tahun lulus</div>
-        </div>
-        <div>
-          <label for="ikutPelepasan">Mengikuti Kegiatan Pelepasan <span class="req">*</span></label>
-          <select id="ikutPelepasan">
-            <option value="">Pilih jawaban</option>
-            <option value="Sudah">Sudah</option>
-            <option value="Belum">Belum</option>
-          </select>
-          <div class="error-msg" id="err-ikutPelepasan">Pilih apakah sudah mengikuti kegiatan pelepasan</div>
-        </div>
-        <div class="full hidden" id="namaPelepasanWrap">
-          <label for="namaPelepasan">Nama Kegiatan Pelepasan <span class="req">*</span></label>
-          <input type="text" id="namaPelepasan" placeholder="Contoh: Pelepasan Alumni Tahun 2025">
-          <div class="error-msg" id="err-namaPelepasan">Nama kegiatan pelepasan wajib diisi</div>
         </div>
         <div>
           <label for="noSertifikat">No. Sertifikat <span class="opt">(Opsional)</span></label>
@@ -635,9 +636,9 @@ function clearAlumni() {
 }
 
 $("ikutPelepasan").addEventListener("change", () => {
-  const sudah = $("ikutPelepasan").value === "Sudah";
-  $("namaPelepasanWrap").classList.toggle("hidden", !sudah);
-  if (!sudah) $("namaPelepasan").value = "";
+  const jawabYa = $("ikutPelepasan").value === "Ya";
+  $("namaPelepasanWrap").classList.toggle("hidden", !jawabYa);
+  if (!jawabYa) $("namaPelepasan").value = "";
   setErr("ikutPelepasan", false);
   setErr("namaPelepasan", false);
 });
@@ -687,8 +688,8 @@ $("formPeserta").addEventListener("submit", e => {
     ["keterampilan", v("keterampilan") !== ""],
     ["asalLKP", !isAlumni || v("asalLKP") !== ""],
     ["tahunLulus", !isAlumni || v("tahunLulus") !== ""],
-    ["ikutPelepasan", !isAlumni || ["Sudah", "Belum"].includes(v("ikutPelepasan"))],
-    ["namaPelepasan", !isAlumni || v("ikutPelepasan") !== "Sudah" || v("namaPelepasan") !== ""],
+    ["ikutPelepasan", !isAlumni || ["Ya", "Tidak"].includes(v("ikutPelepasan"))],
+    ["namaPelepasan", !isAlumni || v("ikutPelepasan") !== "Ya" || v("namaPelepasan") !== ""],
     ["negaraLainnya", !isAlumni || v("negara") !== "Lainnya" || v("negaraLainnya") !== ""]
   ];
 

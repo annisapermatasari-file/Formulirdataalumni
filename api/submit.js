@@ -33,10 +33,10 @@ module.exports = async (req, res) => {
   if (isAlumni && (!txt(d.asalLKP) || !txt(d.tahunLulus))) {
     return res.status(400).json({ status: 'error', message: 'Asal LKP dan tahun lulus wajib diisi' });
   }
-  if (isAlumni && !['Sudah', 'Belum'].includes(d.ikutPelepasan)) {
+  if (isAlumni && !['Ya', 'Tidak'].includes(d.ikutPelepasan)) {
     return res.status(400).json({ status: 'error', message: 'Pilih status kegiatan pelepasan' });
   }
-  if (isAlumni && d.ikutPelepasan === 'Sudah' && !txt(d.namaPelepasan)) {
+  if (isAlumni && d.ikutPelepasan === 'Ya' && !txt(d.namaPelepasan)) {
     return res.status(400).json({ status: 'error', message: 'Nama kegiatan pelepasan wajib diisi' });
   }
 
